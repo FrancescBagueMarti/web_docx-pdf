@@ -6,78 +6,14 @@
     <title>Document</title>
     <script src="mammoth.browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" integrity="sha512-z8IYLHO8bTgFqj+yrPyIJnzBDf7DDhWwiEsk4sY+Oe6J2M+WQequeGS7qioI5vT6rXgVRb4K1UVQC5ER7MKzKQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script>
-    function parseWordDocxFile(inputElement) {
-        var files = inputElement.files || [];
-        if (!files.length) return;
-        var file = files[0];
-        let result;
-
-        console.time();
-        var reader = new FileReader();
-        reader.onloadend = function(event) {
-            var arrayBuffer = reader.result;
-            // debugger
-
-            mammoth.convertToHtml({arrayBuffer: arrayBuffer}).then(function (resultObject) {
-                const result = resultObject.value
-                generatePdf(result)
-            })
-        };
-        reader.readAsArrayBuffer(file);
-    }
-    async function generatePdf(html) {
-      const { PDFDocument, StandardFonts } = window.PDFLib;
-
-      // Create a new PDF document
-      const pdfDoc = await PDFDocument.create();
-
-      // Add a page to the document
-      const page = pdfDoc.addPage([600, 800]);
-
-      // Get the page size and context
-      const { width, height } = page.getSize();
-      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-
-      // Simple HTML content (you can change this)
-      const htmlContent = html;
-
-      // Convert the HTML content to plain text (basic conversion)
-      const textContent = htmlContent
-        .replace(/<h1>/g, '### ')       // Convert <h1> to markdown-like format
-        .replace(/<\/h1>/g, '')
-        .replace(/<p>/g, '')            // Convert <p> to a new line
-        .replace(/<\/p>/g, '\n')
-        .replace(/<ul>/g, '')
-        .replace(/<\/ul>/g, '')
-        .replace(/<li>/g, '* ')         // Convert <li> to bullet points
-        .replace(/<\/li>/g, '\n')
-        .replace(/<\/?[^>]+(>|$)/g, ""); // Remove any remaining HTML tags
-
-      // Draw the content on the PDF
-      page.drawText(textContent, {
-        x: 50,
-        y: height - 100,
-        font: font,
-        size: 12,
-        lineHeight: 14,
-        maxWidth: width - 100,
-      });
-
-      // Serialize the document to bytes
-      const pdfBytes = await pdfDoc.save();
-
-      // Create a download link for the PDF file
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(new Blob([pdfBytes], { type: 'application/pdf' }));
-      link.download = 'generated-pdf.pdf';
-      link.click();
-    }
-    </script>
+    <script src="htmlToPdf.js"></script>
 </head>
 <body>
 
     <input type="file" onchange="parseWordDocxFile(this)">
+
+    <div id="result"></div>
     
 </body>
 </html>
+
