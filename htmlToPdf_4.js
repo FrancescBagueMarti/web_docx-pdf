@@ -26,9 +26,9 @@ async function generatePdf(htmlContent) {
         .replace(/<\/h1>/g, '\n')
         .replace(/<p>/g, '')            // Convert <p> to a new line
         .replace(/<\/p>/g, '\n')
-        .replace(/<ul>/g, '')
-        .replace(/<\/ul>/g, '\n')
-        .replace(/<li>/g, '\n    * ')      // Convert <li> to bullet points
+        .replace(/<ul>/g, '\nul opened\n')
+        .replace(/<\/ul>/g, 'ul closed')
+        .replace(/<li>/g, '* ')      // Convert <li> to bullet points
         .replace(/<\/li>/g, '\n')
         .replace(/<\/?[^>]+(>|$)/g, "");  // Remove remaining HTML tags
 
@@ -79,9 +79,41 @@ async function generatePdf(htmlContent) {
     const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
     // Draw the content on the PDF with wrapping and line breaks
+    // console.log(textContent.split('\n'))
     const lines = textContent.split('\n').filter(line => line.trim() !== ''); // Split the text into lines
-    for (const line of lines) {
-        // console.log(line)
+    let oppened = false;
+    let ul = false;
+    let ulLevel = 0;
+    for (let line of lines) {
+        
+
+        console.log(line)
+        if (line.includes("ul opened")) {
+            oppened = true;
+            ulLevel++;
+            // console.log(line)
+            line = " ";
+            ul = true;
+        }
+        if (line.includes("ul closed")) {
+            ulLevel--;
+            if (ulLevel == 0) {
+                oppened = false;
+            }
+            line = " ";
+            ul = true;
+        }
+
+        if (oppened) {
+            spaces = "";
+            for (let index = 0; index < ulLevel; index++) {
+                spaces+= "   -";
+                
+            }
+            line = spaces+line;
+        }
+
+        
         // Check if the text fits in the current page
         checkPageOverflow(20); // Check if we have enough space for a line of text
 
@@ -107,6 +139,7 @@ async function generatePdf(htmlContent) {
     const url = URL.createObjectURL(blob);
     window.open(url); // Open the PDF in a new tab
 }
+
 // Function to parse DOCX file and convert to PDF
 function parseWordDocxFile(inputElement) {
     var files = inputElement.files || [];
@@ -140,25 +173,4 @@ function parseWordDocxFile(inputElement) {
     };
 
     reader.readAsArrayBuffer(file);
-}
-function formatHtmlString(inputString) {
-    let formattedString = inputString
-        .replace(/</g, '<')
-        .replace(/>/g, '>\n')
-        .trim()
-        .replace(/<img/g, '<img')
-        .split('\n')
-        .map((line, index) => {
-            if (!line.trim()) return '';
-
-            let indentationLevel = (line.match(/</g) || []).length; // Count open tags to decide indent level
-            // Special case for <img> tags, avoid closing tags in the formatting
-            if (line.trim().startsWith('<img')) {
-                return '  '.repeat(indentationLevel) + line.trim(); // Keep <img> as is
-            }
-            // Indentation: replace each line break with proper indentation
-            return '  '.repeat(indentationLevel) + line.trim();
-        })
-        .join('\n');
-    return formattedString;
 }
