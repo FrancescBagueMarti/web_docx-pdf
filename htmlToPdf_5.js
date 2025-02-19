@@ -10,7 +10,7 @@ async function base64ToImageData(base64) {
 async function generatePdf(htmlContent) {
     // Create a new PDF document
     const pdfDoc = await PDFDocument.create();
-    
+
     // Define the page size (A4 size)
     let page = pdfDoc.addPage([595, 842]); // A4 size in points
     const { width, height } = page.getSize();
@@ -19,18 +19,18 @@ async function generatePdf(htmlContent) {
 
     // Regular expressions to find base64 images and text in HTML
     const imageRegex = /<img src="data:image\/([a-zA-Z]*);base64,([^\"]+)"/g;
-    
+
     // Convert HTML to text with line breaks and markdown-like formatting
     const textContent = htmlContent
-        .replace(/<h1>/g, '### ')       // Convert <h1> to markdown-like format
+        .replace(/<h1>/g, '### ')        // Convert <h1> to markdown-like format
         .replace(/<\/h1>/g, '\n')
-        .replace(/<p>/g, '')            // Convert <p> to a new line
+        .replace(/<p>/g, '')             // Convert <p> to a new line
         .replace(/<\/p>/g, '\n')
         .replace(/<ul>/g, '')
         .replace(/<\/ul>/g, '\n')
-        .replace(/<li>/g, '\n    * ')      // Convert <li> to bullet points
+        .replace(/<li>/g, '\n    * ')   // Convert <li> to bullet points
         .replace(/<\/li>/g, '\n')
-        .replace(/<\/?[^>]+(>|$)/g, "");  // Remove remaining HTML tags
+        .replace(/<\/?[^>]+(>|$)/g, "");// Remove remaining HTML tags
 
     // Extract and process all base64 images
     const imageMatches = [...htmlContent.matchAll(imageRegex)];
@@ -42,7 +42,7 @@ async function generatePdf(htmlContent) {
             yPosition = height - 20; // Reset yPosition to the top
         }
     };
-    
+
     // Process all images
     for (const match of imageMatches) {
         const imageType = match[1];
@@ -57,8 +57,8 @@ async function generatePdf(htmlContent) {
         // Get image dimensions
         // const imageWidth = 150;  // You can adjust this value
         // const imageHeight = (image.height / image.width) * imageWidth;
-        const imageWidth = image.width /2;
-        const imageHeight = image.height /2;
+        const imageWidth = image.width / 2;
+        const imageHeight = image.height / 2;
 
         // Check if the image fits in the current page
         checkPageOverflow(imageHeight + 20); // Add some padding after image
@@ -107,6 +107,7 @@ async function generatePdf(htmlContent) {
     const url = URL.createObjectURL(blob);
     window.open(url); // Open the PDF in a new tab
 }
+
 // Function to parse DOCX file and convert to PDF
 function parseWordDocxFile(inputElement) {
     var files = inputElement.files || [];
@@ -117,12 +118,12 @@ function parseWordDocxFile(inputElement) {
 
     console.time();
     var reader = new FileReader();
-    reader.onloadend = function(event) {
+    reader.onloadend = function (event) {
         var arrayBuffer = reader.result;
 
         var options = {
-            convertImage: mammoth.images.imgElement(function(image) {
-                return image.read("base64").then(function(imageBuffer) {
+            convertImage: mammoth.images.imgElement(function (image) {
+                return image.read("base64").then(function (imageBuffer) {
                     return {
                         src: "data:" + image.contentType + ";base64," + imageBuffer
                     };
@@ -130,7 +131,7 @@ function parseWordDocxFile(inputElement) {
             })
         }
 
-        mammoth.convertToHtml({ arrayBuffer: arrayBuffer }, options).then(function(resultObject) {
+        mammoth.convertToHtml({ arrayBuffer: arrayBuffer }, options).then(function (resultObject) {
             const result = resultObject.value;
             // console.log(result)
             // resultado = result
@@ -141,14 +142,21 @@ function parseWordDocxFile(inputElement) {
 
     reader.readAsArrayBuffer(file);
 }
+
 function formatHtmlString(inputString) {
     let formattedString = inputString
+        // Add line breaks before closing tags
         .replace(/</g, '<')
+        // Add line breaks after opening tags
         .replace(/>/g, '>\n')
+        // Remove unnecessary line breaks (leading/trailing whitespace)
         .trim()
+        // Ensure <img> tags don't get added with unnecessary line breaks
         .replace(/<img/g, '<img')
+        // Split into an array of lines for processing
         .split('\n')
         .map((line, index) => {
+            // Skip empty lines
             if (!line.trim()) return '';
 
             let indentationLevel = (line.match(/</g) || []).length; // Count open tags to decide indent level
