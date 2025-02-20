@@ -53,9 +53,16 @@ async function generatePdf(htmlContent) {
 
     // Track the nesting level of lists
     let listLevel = 0;
+    let bullet = '';
+
+    const htmlWithoutStrong = htmlContent
+        // .replace(/<strong>/g, '|@# strong-start #@|')
+        // .replace(/<\/strong>/g, '|@# strong-end #@|')
+        .replace(/<strong>/g, '')
+        .replace(/<\/strong>/g, '')
 
     // Process the HTML content in order
-    const matches = [...htmlContent.matchAll(textRegex)];
+    const matches = [...htmlWithoutStrong.matchAll(textRegex)];
     for (const match of matches) {
         const tagOrText = match[0];
 
@@ -91,25 +98,29 @@ async function generatePdf(htmlContent) {
             }
         } else if (!tagOrText.startsWith('<')) {
             // Process text
-            const textContent = tagOrText
+            var textContent = tagOrText
                 .replace(/<h1>/g, '### ')       // Convert <h1> to markdown-like format
                 .replace(/<\/h1>/g, '\n')
                 .replace(/<p>/g, '')            // Convert <p> to a new line
                 .replace(/<\/p>/g, '\n')
                 .replace(/<ul>/g, '')
                 .replace(/<\/ul>/g, '\n')
-                .replace(/<li>/g, '\n    * ')      // Convert <li> to bullet points
+                .replace(/<li>/g, '\n    * ')   // Convert <li> to bullet points
                 .replace(/<\/li>/g, '\n')
                 .replace(/<\/?[^>]+(>|$)/g, "");  // Remove remaining HTML tags
 
+
             const lines = textContent.split('\n').filter(line => line.trim() !== ''); // Split the text into lines
+            console.log(lines);
+            
             for (const line of lines) {
                 // Check if the text fits in the current page
                 checkPageOverflow(20); // Check if we have enough space for a line of text
 
                 // Add indentation for nested lists
-                const indentation = ' '.repeat(listLevel * 20); // 20 points per nesting level
-                const formattedLine = indentation + line;
+                const indentation = ' '.repeat(listLevel * 10); // 20 points per nesting level
+                const formattedLine = indentation + bullet + line;
+                
 
                 // Draw the line of text on the PDF
                 page.drawText(formattedLine, {
@@ -127,9 +138,13 @@ async function generatePdf(htmlContent) {
         } else if (tagOrText.startsWith('<ul')) {
             // Increase list nesting level
             listLevel++;
+            bullet = '* ';
         } else if (tagOrText.startsWith('</ul')) {
             // Decrease list nesting level
             listLevel--;
+            if (listLevel === 0) {
+                bullet = ' ';
+            }
         }
     }
 
@@ -163,7 +178,8 @@ function parseWordDocxFile(inputElement) {
         };
 
         mammoth.convertToHtml({ arrayBuffer: arrayBuffer }, options).then(function(resultObject) {
-            const result = resultObject.value;
+            const result = resultObject.value; 
+
             generatePdf(result); // Generate the PDF from the HTML content
             document.querySelector('div#result').innerHTML = result; // Display the HTML content (optional)
         });
@@ -171,3 +187,4 @@ function parseWordDocxFile(inputElement) {
 
     reader.readAsArrayBuffer(file);
 }
+
