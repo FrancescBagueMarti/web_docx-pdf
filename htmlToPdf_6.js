@@ -109,10 +109,9 @@ async function generatePdf(htmlContent) {
                 .replace(/<\/li>/g, '\n')
                 .replace(/<\/?[^>]+(>|$)/g, "");  // Remove remaining HTML tags
 
-
             const lines = textContent.split('\n').filter(line => line.trim() !== ''); // Split the text into lines
             console.log(lines);
-            
+
             for (const line of lines) {
                 // Check if the text fits in the current page
                 checkPageOverflow(20); // Check if we have enough space for a line of text
@@ -120,7 +119,6 @@ async function generatePdf(htmlContent) {
                 // Add indentation for nested lists
                 const indentation = ' '.repeat(listLevel * 10); // 20 points per nesting level
                 const formattedLine = indentation + bullet + line;
-                
 
                 // Draw the line of text on the PDF
                 page.drawText(formattedLine, {
